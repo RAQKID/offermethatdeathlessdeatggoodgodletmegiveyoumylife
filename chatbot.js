@@ -14,6 +14,11 @@ const sdk = new Bytez(process.env.BYTEZ_API_KEY);
 // Choose your model
 const model = sdk.model("Qwen/Qwen3-4B");
 
+// Root route
+app.get("/", (req, res) => {
+  res.send("Axentra is Running");
+});
+
 // API endpoint: /api/ask?prompt=YOUR_PROMPT
 app.get("/api/ask", async (req, res) => {
   const prompt = req.query.prompt;
