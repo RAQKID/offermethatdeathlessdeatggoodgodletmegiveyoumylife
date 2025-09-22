@@ -49,11 +49,11 @@ app.get("/api/ask", async (req, res) => {
       });
     }
 
-    // If output is an object (e.g., {role, content}), extract content
-    let responseText = output;
-    if (typeof output === "object" && output.content) {
-      responseText = output.content;
-    }
+    // Extract content if output is an object
+    let responseText = typeof output === "object" && output.content ? output.content : output;
+
+    // Remove <think>...</think> blocks and trim extra spaces
+    responseText = responseText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
     res.json({
       status: true,
