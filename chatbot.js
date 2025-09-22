@@ -34,7 +34,7 @@ app.get("/api/ask", async (req, res) => {
     const { error, output } = await model.run([
       {
         role: "system",
-        content: "You are Axel (version 4) (based on Axel 4v program developed by Raqkid AI), a helpful AI assistant that answers concisely and clearly."
+        content: "You are Axentra (version 4) (based on AxenTra 4v program developed by Raqkid AI), a helpful AI assistant that answers concisely and clearly."
       },
       {
         role: "user",
