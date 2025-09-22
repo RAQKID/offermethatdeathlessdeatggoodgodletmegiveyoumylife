@@ -1,16 +1,15 @@
-// Install dependencies first:
-// npm i express bytez.js
-// or
-// yarn add express bytez.js
-
 import express from "express";
 import Bytez from "bytez.js";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize Bytez SDK
-const sdk = new Bytez("d4a9f21b7259ba6686d4cc91e900ffa0");
+// Initialize Bytez SDK using API key from .env
+const sdk = new Bytez(process.env.BYTEZ_API_KEY);
 
 // Choose your model
 const model = sdk.model("Qwen/Qwen3-4B");
@@ -53,9 +52,7 @@ app.get("/api/ask", async (req, res) => {
 
     res.json({
       status: true,
-      result: [
-        { response: responseText }
-      ]
+      result: [{ response: responseText }]
     });
   } catch (err) {
     console.error(err);
