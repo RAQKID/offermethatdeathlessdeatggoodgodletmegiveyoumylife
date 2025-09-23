@@ -34,7 +34,8 @@ app.get("/api/ask", async (req, res) => {
     const { error, output } = await model.run([
       {
         role: "system",
-        content: "You are Axentra (version 4) (based on AxenTra 4v program developed by Raqkid AI), a helpful AI assistant that answers concisely and clearly."
+        content:
+          "You are Axentra (version 4) (based on AxenTra 4v program developed by Raqkid AI), a helpful AI assistant that answers concisely and clearly."
       },
       {
         role: "user",
@@ -42,19 +43,35 @@ app.get("/api/ask", async (req, res) => {
       },
     ]);
 
+    // Handle SDK errors
     if (error) {
+      let cleanError = error;
+      if (typeof cleanError === "string" && /^Rejected:/i.test(cleanError)) {
+        cleanError = "Rejected: Try again later!";
+      }
       return res.status(500).json({
         status: false,
-        result: [{ response: error }]
+        result: [{ response: cleanError }]
       });
     }
 
-    // Extract content if output is an object
-    let responseText = typeof output === "object" && output.content ? output.content : output;
+    // Extract response text
+    let responseText =
+      typeof output === "object" && output.content ? output.content : output;
 
-    // Remove <think>...</think> blocks and trim extra spaces
+    // Remove <think>...</think> blocks
     responseText = responseText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
+    // If model output is a rejection → force status false
+    if (/^Rejected:/i.test(responseText)) {
+      responseText = "Rejected: Try again later!";
+      return res.json({
+        status: false,
+        result: [{ response: responseText }]
+      });
+    }
+
+    // Normal successful response
     res.json({
       status: true,
       result: [{ response: responseText }]
