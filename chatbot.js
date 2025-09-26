@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 });
 
 // API endpoint: /api/ask?prompt=YOUR_PROMPT
-app.get("/api/ask", async (req, res) => {
+app.get("/ask", async (req, res) => {
   const prompt = req.query.prompt;
 
   if (!prompt) {
