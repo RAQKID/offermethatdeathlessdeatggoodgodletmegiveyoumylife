@@ -9,13 +9,11 @@ const app = express();
 const sdk = new Bytez(process.env.BYTEZ_API_KEY);
 const model = sdk.model("Qwen/Qwen3-4B");
 
-// Root check
 app.get("/", (req, res) => {
   res.send("Axentra is Running");
 });
 
-// Main endpoint
-app.get("/chatbot", async (req, res) => {
+app.get("/ask", async (req, res) => {
   const prompt = req.query.prompt;
 
   if (!prompt) {
@@ -50,4 +48,5 @@ app.get("/chatbot", async (req, res) => {
   }
 });
 
+// 🚨 Export directly for Vercel
 module.exports = fromExpress(app);
