@@ -1,7 +1,8 @@
-// api/ask.js
-import express from "express";
-import Bytez from "bytez.js";
-import dotenv from "dotenv";
+// api/chatbot.js
+const express = require("express");
+const Bytez = require("bytez.js");
+const dotenv = require("dotenv");
+const { fromExpress } = require("@vercel/node");
 
 // Load env vars
 dotenv.config();
@@ -18,7 +19,7 @@ app.get("/", (req, res) => {
 });
 
 // Main endpoint
-app.get("/ask", async (req, res) => {
+app.get("/chatbot", async (req, res) => {
   const prompt = req.query.prompt;
 
   if (!prompt) {
@@ -58,5 +59,5 @@ app.get("/ask", async (req, res) => {
   }
 });
 
-// Export as serverless function
-export default app;
+// ✅ Export wrapped app as a Vercel serverless handler
+module.exports = fromExpress(app);
