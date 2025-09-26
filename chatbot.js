@@ -1,17 +1,15 @@
+// api/ask.js
 import express from "express";
 import Bytez from "bytez.js";
 import dotenv from "dotenv";
 
-// Load environment variables
+// Load env vars
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Initialize Bytez SDK using API key from .env
+// Initialize Bytez SDK
 const sdk = new Bytez(process.env.BYTEZ_API_KEY);
-
-// Choose your model
 const model = sdk.model("Qwen/Qwen3-4B");
 
 // Root route
@@ -19,7 +17,7 @@ app.get("/", (req, res) => {
   res.send("Axentra is Running");
 });
 
-// API endpoint: /api/ask?prompt=YOUR_PROMPT
+// Main endpoint
 app.get("/ask", async (req, res) => {
   const prompt = req.query.prompt;
 
@@ -32,68 +30,33 @@ app.get("/ask", async (req, res) => {
 
   try {
     const { error, output } = await model.run([
-      {
-        role: "system",
-        content:
-          "You are Axentra (version 4) (based on AxenTra 4v program developed by Raqkid AI), a helpful AI assistant that answers concisely and clearly."
-      },
-      {
-        role: "user",
-        content: prompt
-      },
+      { role: "system", content: "You are Axentra (version 4), a helpful AI assistant." },
+      { role: "user", content: prompt }
     ]);
 
-    // Handle SDK errors
     if (error) {
       let cleanError = error;
       if (typeof cleanError === "string" && /^Rejected:/i.test(cleanError)) {
         cleanError = "Rejected: Try again later!";
       }
-      return res.status(500).json({
-        status: false,
-        result: [{ response: cleanError }]
-      });
+      return res.status(500).json({ status: false, result: [{ response: cleanError }] });
     }
 
-    // Extract response text
     let responseText =
       typeof output === "object" && output.content ? output.content : output;
 
-    // Remove <think>...</think> blocks
     responseText = responseText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
-    // If model output is a rejection → force status false
     if (/^Rejected:/i.test(responseText)) {
-      responseText = "Rejected: Try again later!";
-      return res.json({
-        status: false,
-        result: [{ response: responseText }]
-      });
+      return res.json({ status: false, result: [{ response: "Rejected: Try again later!" }] });
     }
 
-    // Normal successful response
-    res.json({
-      status: true,
-      result: [{ response: responseText }]
-    });
+    res.json({ status: true, result: [{ response: responseText }] });
   } catch (err) {
     console.error(err);
-    res.status(500).json({
-      status: false,
-      result: [{ response: "Something went wrong" }]
-    });
+    res.status(500).json({ status: false, result: [{ response: "Something went wrong" }] });
   }
 });
 
-// Handle unknown routes with JSON 404
-app.use((req, res) => {
-  res.status(404).json({
-    status: false,
-    result: [{ response: "Route not found" }]
-  });
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Export as serverless function
+export default app;
