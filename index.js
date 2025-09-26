@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 const sdk = new Bytez(process.env.BYTEZ_API_KEY);
 
 // Choose your model
-const model = sdk.model("Qwen/Qwen1.5-1.8B-Cha");
+const model = sdk.model("Qwen/Qwen3-0.6B");
 
 // Root route
 app.get("/", (req, res) => {
