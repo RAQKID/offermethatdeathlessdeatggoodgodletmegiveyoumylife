@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/ask", "destination": "/api/chatbot" }
+    { "source": "/ask", "destination": "/api/ask" }
   ]
 }
