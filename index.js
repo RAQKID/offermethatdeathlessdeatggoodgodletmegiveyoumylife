@@ -1,23 +1,23 @@
 const express = require("express");
 const Bytez = require("bytez.js");
-const dotenv = require("dotenv");
-
-dotenv.config();
 
 const app = express();
 
+if (!process.env.BYTEZ_API_KEY) {
+  console.error("❌ BYTEZ_API_KEY is not set");
+}
+
 const sdk = new Bytez(process.env.BYTEZ_API_KEY);
-const model = sdk.model("Qwen/Qwen3-4B");
+const model = sdk.model("Qwen/Qwen1.5-1.8B-Chat");
 
 // Root route
 app.get("/", (req, res) => {
-  res.send("Axentra is Running");
+  res.send("Axentra is Running ✅");
 });
 
 // Ask endpoint
 app.get("/ask", async (req, res) => {
   const prompt = req.query.prompt;
-
   if (!prompt) {
     return res.status(400).json({
       status: false,
@@ -32,29 +32,19 @@ app.get("/ask", async (req, res) => {
     ]);
 
     if (error) {
-      let cleanError = error;
-      if (typeof cleanError === "string" && /^Rejected:/i.test(cleanError)) {
-        cleanError = "Rejected: Try again later!";
-      }
-      return res.status(500).json({ status: false, result: [{ response: cleanError }] });
+      console.error("❌ Bytez SDK error:", error);
+      return res.status(500).json({ status: false, result: [{ response: String(error) }] });
     }
 
-    let responseText =
-      typeof output === "object" && output.content ? output.content : output;
-
+    let responseText = typeof output === "object" && output.content ? output.content : output;
     responseText = responseText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-
-    if (/^Rejected:/i.test(responseText)) {
-      return res.json({ status: false, result: [{ response: "Rejected: Try again later!" }] });
-    }
 
     res.json({ status: true, result: [{ response: responseText }] });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ status: false, result: [{ response: "Something went wrong" }] });
+    console.error("🔥 Unexpected error:", err);
+    res.status(500).json({ status: false, result: [{ response: err.message || "Internal error" }] });
   }
 });
 
-// Start server (Vercel will pick the PORT automatically)
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Axentra running on port ${PORT}`));
+// ❌ Do not use app.listen() on Vercel
+module.exports = app;
