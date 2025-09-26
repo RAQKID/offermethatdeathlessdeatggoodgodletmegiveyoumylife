@@ -3,21 +3,18 @@ const Bytez = require("bytez.js");
 const dotenv = require("dotenv");
 const { fromExpress } = require("@vercel/node");
 
-// Load env vars
 dotenv.config();
 
 const app = express();
 
-// Initialize Bytez SDK
 const sdk = new Bytez(process.env.BYTEZ_API_KEY);
 const model = sdk.model("Qwen/Qwen3-4B");
 
-// Root route
 app.get("/", (req, res) => {
   res.send("Axentra is Running");
 });
 
-// Main endpoint (keep it at /chatbot, since vercel.json will handle /ask)
+// Internal endpoint
 app.get("/chatbot", async (req, res) => {
   const prompt = req.query.prompt;
 
@@ -58,5 +55,4 @@ app.get("/chatbot", async (req, res) => {
   }
 });
 
-// ✅ Export wrapped app as a Vercel serverless handler
 module.exports = fromExpress(app);
