@@ -1,8 +1,6 @@
 {
   "rewrites": [
-    {
-      "source": "/:path*",
-      "destination": "/api/:path*"
-    }
+    { "source": "/chatbot", "destination": "/api/chatbot" },
+    { "source": "/", "destination": "/api/index" }
   ]
 }
