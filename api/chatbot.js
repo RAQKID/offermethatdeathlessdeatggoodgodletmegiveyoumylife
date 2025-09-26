@@ -1,28 +1,25 @@
 const express = require("express");
+const { fromExpress } = require("@vercel/node");
 const Bytez = require("bytez.js");
 const dotenv = require("dotenv");
-const { fromExpress } = require("@vercel/node");
 
 dotenv.config();
 
 const app = express();
-
 const sdk = new Bytez(process.env.BYTEZ_API_KEY);
 const model = sdk.model("Qwen/Qwen3-4B");
 
+// Root check
 app.get("/", (req, res) => {
   res.send("Axentra is Running");
 });
 
-// Internal endpoint
+// Main endpoint
 app.get("/chatbot", async (req, res) => {
   const prompt = req.query.prompt;
 
   if (!prompt) {
-    return res.status(400).json({
-      status: false,
-      result: [{ response: "Prompt is required" }]
-    });
+    return res.status(400).json({ status: false, result: [{ response: "Prompt is required" }] });
   }
 
   try {
@@ -39,9 +36,7 @@ app.get("/chatbot", async (req, res) => {
       return res.status(500).json({ status: false, result: [{ response: cleanError }] });
     }
 
-    let responseText =
-      typeof output === "object" && output.content ? output.content : output;
-
+    let responseText = typeof output === "object" && output.content ? output.content : output;
     responseText = responseText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
     if (/^Rejected:/i.test(responseText)) {
