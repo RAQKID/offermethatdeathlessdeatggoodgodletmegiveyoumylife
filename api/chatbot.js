@@ -1,17 +1,28 @@
 // api/chatbot.js
 const express = require("express");
-const Bytez = require("bytez.js");
 const dotenv = require("dotenv");
 const { fromExpress } = require("@vercel/node");
+
+let Bytez, sdk, model;
 
 // Load env vars
 dotenv.config();
 
-const app = express();
+try {
+  Bytez = require("bytez.js");
 
-// Initialize Bytez SDK
-const sdk = new Bytez(process.env.BYTEZ_API_KEY);
-const model = sdk.model("Qwen/Qwen3-4B");
+  if (process.env.BYTEZ_API_KEY) {
+    sdk = new Bytez(process.env.BYTEZ_API_KEY);
+    model = sdk.model("Qwen/Qwen3-4B");
+    console.log("✅ Bytez SDK initialized");
+  } else {
+    console.warn("⚠️ BYTEZ_API_KEY is not set. Falling back to dummy mode.");
+  }
+} catch (err) {
+  console.error("❌ Failed to load Bytez SDK:", err.message);
+}
+
+const app = express();
 
 // Root route
 app.get("/", (req, res) => {
@@ -26,6 +37,14 @@ app.get("/chatbot", async (req, res) => {
     return res.status(400).json({
       status: false,
       result: [{ response: "Prompt is required" }]
+    });
+  }
+
+  // If SDK not ready, fallback response
+  if (!model) {
+    return res.json({
+      status: true,
+      result: [{ response: `Echo: ${prompt}` }]
     });
   }
 
@@ -49,13 +68,19 @@ app.get("/chatbot", async (req, res) => {
     responseText = responseText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
     if (/^Rejected:/i.test(responseText)) {
-      return res.json({ status: false, result: [{ response: "Rejected: Try again later!" }] });
+      return res.json({
+        status: false,
+        result: [{ response: "Rejected: Try again later!" }]
+      });
     }
 
     res.json({ status: true, result: [{ response: responseText }] });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ status: false, result: [{ response: "Something went wrong" }] });
+    console.error("❌ Chatbot error:", err);
+    res.status(500).json({
+      status: false,
+      result: [{ response: "Something went wrong" }]
+    });
   }
 });
 
