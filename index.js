@@ -1,23 +1,28 @@
-const express = require("express");
-const Bytez = require("bytez.js");
+import express from "express";
+import Bytez from "bytez.js";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-if (!process.env.BYTEZ_API_KEY) {
-  console.error("❌ BYTEZ_API_KEY is not set");
-}
-
+// Initialize Bytez SDK using API key from .env
 const sdk = new Bytez(process.env.BYTEZ_API_KEY);
-const model = sdk.model("Qwen/Qwen1.5-1.8B-Chat");
+
+// Choose your model
+const model = sdk.model("Qwen/Qwen1.5-1.8B-Cha");
 
 // Root route
 app.get("/", (req, res) => {
-  res.send("Axentra is Running ✅");
+  res.send("Axentra is running!");
 });
 
-// Ask endpoint
+// API endpoint: /api/ask?prompt=YOUR_PROMPT
 app.get("/ask", async (req, res) => {
   const prompt = req.query.prompt;
+
   if (!prompt) {
     return res.status(400).json({
       status: false,
@@ -27,24 +32,68 @@ app.get("/ask", async (req, res) => {
 
   try {
     const { error, output } = await model.run([
-      { role: "system", content: "You are Axentra (version 4), a helpful AI assistant." },
-      { role: "user", content: prompt }
+      {
+        role: "system",
+        content:
+          "You are Axentra (version 4) (developed by Raqkid505 AI), a helpful AI assistant that answers concisely and clearly."
+      },
+      {
+        role: "user",
+        content: prompt
+      },
     ]);
 
+    // Handle SDK errors
     if (error) {
-      console.error("❌ Bytez SDK error:", error);
-      return res.status(500).json({ status: false, result: [{ response: String(error) }] });
+      let cleanError = error;
+      if (typeof cleanError === "string" && /^Rejected:/i.test(cleanError)) {
+        cleanError = "Rejected: Try again later!";
+      }
+      return res.status(500).json({
+        status: false,
+        result: [{ response: cleanError }]
+      });
     }
 
-    let responseText = typeof output === "object" && output.content ? output.content : output;
+    // Extract response text
+    let responseText =
+      typeof output === "object" && output.content ? output.content : output;
+
+    // Remove <think>...</think> blocks
     responseText = responseText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
-    res.json({ status: true, result: [{ response: responseText }] });
+    // If model output is a rejection → force status false
+    if (/^Rejected:/i.test(responseText)) {
+      responseText = "Rejected: Try again later!";
+      return res.json({
+        status: false,
+        result: [{ response: responseText }]
+      });
+    }
+
+    // Normal successful response
+    res.json({
+      status: true,
+      result: [{ response: responseText }]
+    });
   } catch (err) {
-    console.error("🔥 Unexpected error:", err);
-    res.status(500).json({ status: false, result: [{ response: err.message || "Internal error" }] });
+    console.error(err);
+    res.status(500).json({
+      status: false,
+      result: [{ response: "Something went wrong" }]
+    });
   }
 });
 
-// ❌ Do not use app.listen() on Vercel
-module.exports = app;
+// Handle unknown routes with JSON 404
+app.use((req, res) => {
+  res.status(404).json({
+    status: false,
+    result: [{ response: "Route not found" }]
+  });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
